@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>บัญชีรายวัน</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <section class="user-gate" id="userGate">
+    <form class="user-gate-card" id="userGateForm" autocomplete="off">
+      <div class="brand-mark gate-mark" aria-hidden="true">
+        <i data-lucide="user-round"></i>
+      </div>
+      <p class="eyebrow">Choose User</p>
+      <h1>เข้าใช้งานบัญชีรายวัน</h1>
+      <p>กรอกชื่อผู้ใช้ใหม่ หรือเลือกผู้ใช้เดิมจากรายการด้านล่าง</p>
+
+      <label class="field">
+        <span>ชื่อผู้ใช้</span>
+        <input id="gateUsernameInput" type="text" maxlength="40" placeholder="เช่น ohm" required />
+      </label>
+
+      <button class="primary-button" type="submit">
+        <i data-lucide="arrow-right"></i>
+        เข้าใช้งาน
+      </button>
+
+      <div class="gate-users" id="gateUserList" aria-label="รายชื่อผู้ใช้เดิม"></div>
+    </form>
+  </section>
+
+  <div class="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">
+          <i data-lucide="wallet-cards"></i>
+        </div>
+        <div>
+          <p class="eyebrow">Personal Ledger</p>
+          <h1>บัญชีรายวัน</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-tools" aria-label="ผู้ใช้งานปัจจุบัน">
+          <button class="profile-chip" id="openProfileButton" type="button">
+            <span class="avatar avatar-small" id="userAvatarSmall"></span>
+            <span class="user-badge" id="userBadge"></span>
+          </button>
+          <button class="icon-button switch-user-icon" id="switchUserButton" type="button" title="เปลี่ยนผู้ใช้" aria-label="เปลี่ยนผู้ใช้">
+            <i data-lucide="users-round"></i>
+          </button>
+        </div>
+
+        <div class="file-menu" id="fileMenu">
+          <button class="ghost-button file-menu-trigger" id="fileMenuButton" type="button" aria-expanded="false" aria-controls="fileMenuPanel">
+            <i data-lucide="folder-down"></i>
+            จัดการไฟล์
+            <i data-lucide="chevron-down"></i>
+          </button>
+          <div class="file-menu-panel" id="fileMenuPanel" hidden>
+            <button type="button" id="exportPdfButton">
+              <i data-lucide="file-down"></i>
+              <span><strong>PDF</strong><small>พิมพ์หรือบันทึกเป็น PDF</small></span>
+            </button>
+            <button type="button" id="exportExcelButton">
+              <i data-lucide="table"></i>
+              <span><strong>Excel</strong><small>ส่งออกตาราง .xls</small></span>
+            </button>
+            <button type="button" id="exportJsonButton">
+              <i data-lucide="download"></i>
+              <span><strong>สำรองข้อมูล</strong><small>บันทึกไฟล์ JSON</small></span>
+            </button>
+            <label for="importFile">
+              <i data-lucide="upload"></i>
+              <span><strong>นำเข้า</strong><small>กู้ข้อมูลจากไฟล์ JSON</small></span>
+            </label>
+          </div>
+          <input id="importFile" type="file" accept="application/json" hidden />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="workspace">
+        <aside class="entry-panel" aria-labelledby="entryTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Entry</p>
+              <h2 id="entryTitle">บันทึกรายการ</h2>
+            </div>
+            <button class="icon-button" id="resetFormButton" type="button" title="ล้างฟอร์ม" aria-label="ล้างฟอร์ม">
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+          </div>
+
+          <form id="transactionForm" autocomplete="off">
+            <input id="transactionId" type="hidden" />
+
+            <fieldset class="segmented" aria-label="ประเภทรายการ">
+              <label>
+                <input type="radio" name="type" value="expense" checked />
+                <span>รายจ่าย</span>
+              </label>
+              <label>
+                <input type="radio" name="type" value="income" />
+                <span>รายรับ</span>
+              </label>
+            </fieldset>
+
+            <label class="field">
+              <span>วันที่</span>
+              <input id="dateInput" type="date" required />
+            </label>
+
+            <label class="field">
+              <span>จำนวนเงิน</span>
+              <input id="amountInput" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
+            </label>
+
+            <label class="field">
+              <span>หมวดหมู่</span>
+              <select id="categorySelect" required></select>
+            </label>
+
+            <label class="field">
+              <span>หมวดหมู่ใหม่</span>
+              <input id="customCategoryInput" type="text" maxlength="28" placeholder="เว้นว่างถ้าใช้หมวดด้านบน" />
+            </label>
+
+            <label class="field">
+              <span>หมายเหตุ</span>
+              <textarea id="noteInput" maxlength="120" rows="3" placeholder="เช่น มื้อกลางวัน, ค่าน้ำมัน, รับงานเสริม"></textarea>
+            </label>
+
+            <button class="primary-button" id="submitButton" type="submit">
+              <i data-lucide="plus"></i>
+              เพิ่มรายการ
+            </button>
+          </form>
+
+          <div class="settings-block" aria-labelledby="settingsTitle">
+            <div class="section-heading tight">
+              <div>
+                <p class="eyebrow">Budget</p>
+                <h2 id="settingsTitle">งบรายวัน</h2>
+              </div>
+              <button class="icon-button" id="saveSettingsButton" type="button" title="บันทึกงบ" aria-label="บันทึกงบ">
+                <i data-lucide="save"></i>
+              </button>
+            </div>
+            <label class="field">
+              <span>ตั้งงบรายจ่ายต่อวัน</span>
+              <input id="dailyBudgetInput" type="number" min="0" step="1" inputmode="decimal" placeholder="เช่น 300" />
+            </label>
+          </div>
+        </aside>
+
+        <section class="dashboard" aria-label="สรุปรายรับรายจ่าย">
+          <div class="controls-strip">
+            <div class="date-controls">
+              <button class="icon-button" id="previousDayButton" type="button" title="วันก่อนหน้า" aria-label="วันก่อนหน้า">
+                <i data-lucide="chevron-left"></i>
+              </button>
+              <input id="selectedDateInput" type="date" />
+              <button class="icon-button" id="nextDayButton" type="button" title="วันถัดไป" aria-label="วันถัดไป">
+                <i data-lucide="chevron-right"></i>
+              </button>
+              <button class="ghost-button compact" id="todayButton" type="button">
+                <i data-lucide="calendar-days"></i>
+                วันนี้
+              </button>
+            </div>
+            <div class="month-label" id="monthLabel">-</div>
+          </div>
+
+          <section class="metrics-grid" aria-label="ตัวเลขสรุป">
+            <article class="metric metric-income">
+              <div class="metric-head"><span>รายรับวันนี้</span><i data-lucide="trending-up"></i></div>
+              <strong id="dayIncome">฿0.00</strong>
+            </article>
+            <article class="metric metric-expense">
+              <div class="metric-head"><span>รายจ่ายวันนี้</span><i data-lucide="trending-down"></i></div>
+              <strong id="dayExpense">฿0.00</strong>
+            </article>
+            <article class="metric metric-balance">
+              <div class="metric-head"><span>คงเหลือวันนี้</span><i data-lucide="scale"></i></div>
+              <strong id="dayNet">฿0.00</strong>
+            </article>
+            <article class="metric metric-budget">
+              <div class="metric-head"><span>งบคงเหลือ</span><i data-lucide="gauge"></i></div>
+              <strong id="budgetLeft">฿0.00</strong>
+            </article>
+          </section>
+
+          <section class="smart-strip" aria-label="คำแนะนำวันนี้">
+            <div class="smart-icon"><i data-lucide="sparkles"></i></div>
+            <div>
+              <p class="eyebrow">Insight</p>
+              <h2 id="todayInsight">กำลังคำนวณสถานะวันนี้</h2>
+            </div>
+          </section>
+
+          <section class="insight-grid">
+            <div class="analysis-panel" aria-labelledby="chartTitle">
+              <div class="section-heading tight">
+                <div>
+                  <p class="eyebrow">Trend</p>
+                  <h2 id="chartTitle">ภาพรวม 14 วัน</h2>
+                </div>
+                <button class="icon-button" id="exportCsvButton" type="button" title="ส่งออก CSV" aria-label="ส่งออก CSV">
+                  <i data-lucide="file-spreadsheet"></i>
+                </button>
+              </div>
+              <div class="bar-chart" id="barChart" aria-label="กราฟรายจ่ายย้อนหลัง 14 วัน"></div>
+            </div>
+
+            <div class="analysis-panel" aria-labelledby="categoryTitle">
+              <div class="section-heading tight">
+                <div>
+                  <p class="eyebrow">Category</p>
+                  <h2 id="categoryTitle">รายจ่ายเดือนนี้</h2>
+                </div>
+              </div>
+              <div class="category-list" id="categoryList"></div>
+            </div>
+          </section>
+
+          <section class="records-panel" aria-labelledby="recordsTitle">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Records</p>
+                <h2 id="recordsTitle">รายการทั้งหมด</h2>
+              </div>
+              <div class="record-tools">
+                <label class="search-field">
+                  <i data-lucide="search"></i>
+                  <input id="searchInput" type="search" placeholder="ค้นหา" />
+                </label>
+                <select id="typeFilter" aria-label="กรองประเภท">
+                  <option value="all">ทั้งหมด</option>
+                  <option value="expense">รายจ่าย</option>
+                  <option value="income">รายรับ</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>วันที่</th>
+                    <th>ประเภท</th>
+                    <th>หมวดหมู่</th>
+                    <th>หมายเหตุ</th>
+                    <th class="number-cell">จำนวนเงิน</th>
+                    <th class="action-cell">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="recordTable"></tbody>
+              </table>
+              <div class="empty-state" id="emptyState">
+                <i data-lucide="inbox"></i>
+                <p>ยังไม่มีรายการสำหรับตัวกรองนี้</p>
+              </div>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <section class="modal-backdrop" id="editTransactionModal" hidden>
+    <div class="modal-card edit-modal" role="dialog" aria-modal="true" aria-labelledby="editTransactionTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Edit Record</p>
+          <h2 id="editTransactionTitle">แก้ไขรายการ</h2>
+        </div>
+        <button class="icon-button" id="closeEditTransactionButton" type="button" title="ปิด" aria-label="ปิด">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form class="edit-transaction-form" id="editTransactionForm" autocomplete="off">
+        <input id="editTransactionId" type="hidden" />
+
+        <div class="edit-preview" id="editTransactionPreview">
+          <div class="edit-preview-icon">
+            <i data-lucide="pencil"></i>
+          </div>
+          <div>
+            <span>กำลังแก้ไข</span>
+            <strong>เลือกรายการจากตาราง</strong>
+          </div>
+        </div>
+
+        <fieldset class="segmented edit-segmented" aria-label="ประเภทรายการที่แก้ไข">
+          <label>
+            <input type="radio" name="editType" value="expense" checked />
+            <span>รายจ่าย</span>
+          </label>
+          <label>
+            <input type="radio" name="editType" value="income" />
+            <span>รายรับ</span>
+          </label>
+        </fieldset>
+
+        <div class="edit-grid">
+          <label class="field">
+            <span>วันที่</span>
+            <input id="editDateInput" type="date" required />
+          </label>
+
+          <label class="field">
+            <span>จำนวนเงิน</span>
+            <input id="editAmountInput" type="number" min="0" step="0.01" inputmode="decimal" required />
+          </label>
+
+          <label class="field">
+            <span>หมวดหมู่</span>
+            <select id="editCategorySelect" required></select>
+          </label>
+
+          <label class="field">
+            <span>หมวดหมู่ใหม่</span>
+            <input id="editCustomCategoryInput" type="text" maxlength="28" placeholder="เว้นว่างถ้าใช้หมวดเดิม" />
+          </label>
+
+          <label class="field field-full">
+            <span>หมายเหตุ</span>
+            <textarea id="editNoteInput" maxlength="120" rows="3" placeholder="เพิ่มรายละเอียดของรายการนี้"></textarea>
+          </label>
+        </div>
+
+        <div class="edit-form-actions">
+          <button class="ghost-button" id="cancelEditTransactionButton" type="button">
+            ยกเลิก
+          </button>
+          <button class="primary-button" type="submit">
+            <i data-lucide="save"></i>
+            บันทึกการแก้ไข
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="modal-backdrop" id="profileModal" hidden>
+    <div class="modal-card profile-modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Profile</p>
+          <h2 id="profileTitle">โปรไฟล์ของฉัน</h2>
+        </div>
+        <button class="icon-button" id="closeProfileButton" type="button" title="ปิด" aria-label="ปิด">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="profileForm" autocomplete="off">
+        <div class="profile-hero">
+          <span class="avatar avatar-large" id="profileAvatar"></span>
+          <div class="profile-actions">
+            <label class="ghost-button file-button" for="profileImageInput">
+              <i data-lucide="image-up"></i>
+              เปลี่ยนรูป
+            </label>
+            <input id="profileImageInput" type="file" accept="image/*" hidden />
+            <button class="ghost-button" id="removeProfileImageButton" type="button">
+              <i data-lucide="image-minus"></i>
+              ลบรูป
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-stats" id="profileStats" aria-label="สรุปบัญชีผู้ใช้"></div>
+
+        <div class="profile-grid">
+          <label class="field">
+            <span>ชื่อผู้ใช้</span>
+            <input id="profileName" type="text" maxlength="40" required />
+          </label>
+          <label class="field">
+            <span>อีเมล</span>
+            <input id="profileEmail" type="email" required />
+          </label>
+        </div>
+
+        <button class="primary-button" type="submit">
+          <i data-lucide="save"></i>
+          บันทึกโปรไฟล์
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <section class="modal-backdrop" id="deleteProfileModal" hidden>
+    <div class="modal-card delete-modal" role="dialog" aria-modal="true" aria-labelledby="deleteProfileTitle" aria-describedby="deleteProfileDesc">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow danger-text">Delete Profile</p>
+          <h2 id="deleteProfileTitle">ยืนยันการลบโปรไฟล์</h2>
+        </div>
+        <button class="icon-button" id="closeDeleteProfileButton" type="button" title="ปิด" aria-label="ปิด">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="delete-body">
+        <div class="delete-warning">
+          <i data-lucide="triangle-alert"></i>
+          <div>
+            <strong>ลบแล้วกู้คืนไม่ได้</strong>
+            <p id="deleteProfileDesc">โปรไฟล์นี้และประวัติรายรับรายจ่ายทั้งหมดจะถูกลบออกจากเครื่องนี้</p>
+          </div>
+        </div>
+
+        <div class="delete-profile-head">
+          <span class="avatar avatar-large" id="deleteProfileAvatar"></span>
+          <div>
+            <h3 id="deleteProfileName">-</h3>
+            <p id="deleteProfileMeta">-</p>
+          </div>
+        </div>
+
+        <div class="delete-summary-grid" id="deleteSummaryStats" aria-label="สรุปข้อมูลที่จะถูกลบ"></div>
+
+        <section class="delete-history" aria-labelledby="deleteHistoryTitle">
+          <div class="section-heading tight">
+            <div>
+              <p class="eyebrow">Recent History</p>
+              <h3 id="deleteHistoryTitle">รายการล่าสุดที่จะถูกลบ</h3>
+            </div>
+          </div>
+          <div class="delete-history-list" id="deleteRecentList"></div>
+        </section>
+
+        <div class="delete-modal-actions">
+          <button class="ghost-button" id="cancelDeleteProfileButton" type="button">
+            ยกเลิก
+          </button>
+          <button class="danger-button" id="confirmDeleteProfileButton" type="button">
+            <i data-lucide="trash-2"></i>
+            ลบโปรไฟล์นี้
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
